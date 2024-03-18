@@ -13,7 +13,7 @@ namespace Zero.Utils
             {
                 if (service.GetInterface(nameof(IMonoService)) is null)
                 {
-                    throw new TypeAccessException($"{service.Name} is not a {nameof(IMonoService)}");
+                    throw new NotSupportedException($"{service.Name} is not a {nameof(IMonoService)}");
                 }
 
                 await TaskUtils.WaitEveryFrameUntil(() => ServiceLocator.Container.IsRegistered(service));

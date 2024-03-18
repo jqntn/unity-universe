@@ -10,11 +10,6 @@ namespace Zero.Utils
 
         public static async Task WaitUntil(Func<Task> wait, Func<bool> until)
         {
-            if (wait is null || until is null)
-            {
-                return;
-            }
-
             while (!until.Invoke())
             {
                 await wait.Invoke();
