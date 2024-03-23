@@ -1,10 +1,12 @@
-using UnityEngine;
+using Zero.Controllers.Cameras;
 using Zero.Services.Base;
 
 namespace Zero.Services
 {
     internal interface ICameraService : IMonoService
     {
-        Camera MainCamera { get; }
+        ICameraController CurrentCameraController { get; }
+
+        void RegisterCameraController(in ICameraController cameraController);
     }
 }

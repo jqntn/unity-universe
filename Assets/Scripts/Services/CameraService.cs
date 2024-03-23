@@ -1,21 +1,49 @@
+using System.Collections;
 using Unity;
 using UnityEngine;
+using Zero.Controllers.Cameras;
 using Zero.Services.Base;
 
 namespace Zero.Services
 {
     internal sealed class CameraService : MonoBehaviour, ICameraService
     {
-        [field: SerializeField] public Camera MainCamera { get; private set; }
+        [field: SerializeField] public ICameraController CurrentCameraController { get; private set; }
+
+        [SerializeField] private Camera _defaultCamera;
 
         public void Awake()
         {
             _ = ServiceLocator.Container.RegisterInstance<ICameraService>(this);
+
+            StartCoroutine(InstantiateDefaultCamera());
         }
 
         public void OnDestroy()
         {
             ServiceLocator.Container.UnregisterInstance(this);
+        }
+
+        public void RegisterCameraController(in ICameraController cameraController)
+        {
+            if (CurrentCameraController is not null)
+            {
+                CurrentCameraController.Camera.tag = "Untagged";
+            }
+
+            CurrentCameraController = cameraController;
+
+            CurrentCameraController.Camera.tag = "MainCamera";
+        }
+
+        private IEnumerator InstantiateDefaultCamera()
+        {
+            yield return new WaitForEndOfFrame();
+
+            if (CurrentCameraController is null)
+            {
+                Instantiate(_defaultCamera, transform).tag = "MainCamera";
+            }
         }
     }
 }
