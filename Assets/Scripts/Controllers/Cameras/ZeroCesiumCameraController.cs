@@ -58,7 +58,7 @@ namespace CesiumForUnity
         /// If dynamic speed is enabled, this value will not be used.
         /// </summary>
         public float DefaultMaximumSpeed
-        { get => _defaultMaximumSpeed; set => _defaultMaximumSpeed = Mathf.Max(value, 0.0f); }
+        { get => _defaultMaximumSpeed; set => _defaultMaximumSpeed = math.max(value, 0.0f); }
         [SerializeField][Min(0.0f)] private float _defaultMaximumSpeed = 100.0f;
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace CesiumForUnity
         /// from the Earth, which makes it move slowly when it is right above a tileset.
         /// </summary>
         public float DynamicSpeedMinHeight
-        { get => _dynamicSpeedMinHeight; set => _dynamicSpeedMinHeight = Mathf.Max(value, 0.0f); }
+        { get => _dynamicSpeedMinHeight; set => _dynamicSpeedMinHeight = math.max(value, 0.0f); }
         [SerializeField][Min(0.0f)] private float _dynamicSpeedMinHeight = 20.0f;
 
         /// <summary>
@@ -93,11 +93,11 @@ namespace CesiumForUnity
         /// Below this height, the clipping planes will be set to their initial values.
         /// </summary>
         public float DynamicClippingPlanesMinHeight
-        { get => _dynamicClippingPlanesMinHeight; set => _dynamicClippingPlanesMinHeight = Mathf.Max(value, 0.0f); }
+        { get => _dynamicClippingPlanesMinHeight; set => _dynamicClippingPlanesMinHeight = math.max(value, 0.0f); }
         [SerializeField][Min(0.0f)] private float _dynamicClippingPlanesMinHeight = 10_000.0f;
 
         public float DynamicClippingPlanesRadius
-        { get => _dynamicClippingPlanesRadius; set => _dynamicClippingPlanesRadius = Mathf.Max(value, 0.0f); }
+        { get => _dynamicClippingPlanesRadius; set => _dynamicClippingPlanesRadius = math.max(value, 0.0f); }
 
         [SerializeField][Min(0.0f)] private float _dynamicClippingPlanesRadius = (float)UnitsUtils.ONE_AU;
 
@@ -129,7 +129,7 @@ namespace CesiumForUnity
         private readonly float _lookSpeed = 10.0f * LOOK_SPEED_MULTIPLIER;
 
         private float _acceleration = 10_000.0f;
-        private readonly float _deceleration = Mathf.Infinity;
+        private readonly float _deceleration = math.INFINITY;
         private readonly float _maxRaycastDistance = 1_000_000.0f;
 
         private float _maxSpeed = 100.0f; // Maximum speed with the speed multiplier applied.
@@ -544,7 +544,7 @@ namespace CesiumForUnity
                 }
 
                 float max = _enableDynamicSpeed ? 50.0f : 50000.0f;
-                _speedMultiplier = Mathf.Clamp(_speedMultiplier, 0.1f, max);
+                _speedMultiplier = math.clamp(_speedMultiplier, 0.1f, max);
             }
         }
 
@@ -578,7 +578,7 @@ namespace CesiumForUnity
                 rotationX += 360.0f;
             }
 
-            float newRotationX = Mathf.Clamp(rotationX - valueX, 270.0f, 450.0f);
+            float newRotationX = math.clamp(rotationX - valueX, 270.0f, 450.0f);
             float newRotationY = transform.localEulerAngles.y + valueY;
             transform.localRotation = Quaternion.Euler(newRotationX, newRotationY, transform.localEulerAngles.z);
         }
@@ -621,7 +621,7 @@ namespace CesiumForUnity
             else
             {
                 // Decelerate
-                float speed = Mathf.Max(_velocity.magnitude - _deceleration * Time.deltaTime * MOVE_SPEED_MULTIPLIER, 0.0f);
+                float speed = math.max(_velocity.magnitude - _deceleration * Time.deltaTime * MOVE_SPEED_MULTIPLIER, 0.0f);
 
                 _velocity = Vector3.ClampMagnitude(_velocity, speed);
             }
@@ -692,7 +692,7 @@ namespace CesiumForUnity
             }
 
             // Raycast along the camera's view (forward) vector.
-            float raycastDistance = Mathf.Clamp(_maxSpeed * 3.0f, 0.0f, _maxRaycastDistance);
+            float raycastDistance = math.clamp(_maxSpeed * 3.0f, 0.0f, _maxRaycastDistance);
 
             // If the raycast does not hit, then only override speed if the height
             // is lower than the maximum threshold. Otherwise, if both raycasts hit,
@@ -721,7 +721,7 @@ namespace CesiumForUnity
         {
             float actualSpeed = _maxSpeedCurve.Evaluate(speed);
             _maxSpeed = _speedMultiplier * actualSpeed;
-            _acceleration = Mathf.Clamp(_maxSpeed * 5.0f, 20000.0f, 10000000.0f);
+            _acceleration = math.clamp(_maxSpeed * 5.0f, 20000.0f, 10000000.0f);
         }
 
         private void UpdateDynamicSpeed()
@@ -771,13 +771,13 @@ namespace CesiumForUnity
                               : _dynamicClippingPlanesRadius;
 
                 farClipPlane = height + (float)(2.0 * radius);
-                farClipPlane = Mathf.Min(farClipPlane, _maximumFarClipPlane);
+                farClipPlane = math.min(farClipPlane, _maximumFarClipPlane);
 
                 float farClipRatio = farClipPlane / _maximumNearToFarRatio;
 
                 if (farClipRatio > nearClipPlane)
                 {
-                    nearClipPlane = Mathf.Min(farClipRatio, _maximumNearClipPlane);
+                    nearClipPlane = math.min(farClipRatio, _maximumNearClipPlane);
                 }
             }
 
