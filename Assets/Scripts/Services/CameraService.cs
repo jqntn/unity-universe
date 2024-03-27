@@ -26,7 +26,7 @@ namespace Zero.Services
 
         public void RegisterCameraController(in ICameraController cameraController)
         {
-            if (CurrentCameraController is not null)
+            if (CurrentCameraController != null)
             {
                 CurrentCameraController.Camera.tag = "Untagged";
             }
@@ -40,7 +40,7 @@ namespace Zero.Services
         {
             yield return new WaitForEndOfFrame();
 
-            if (CurrentCameraController is null)
+            if (CurrentCameraController == null)
             {
                 Instantiate(_defaultCamera, transform).tag = "MainCamera";
             }

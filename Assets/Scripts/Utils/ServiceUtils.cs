@@ -11,7 +11,7 @@ namespace Zero.Utils
         {
             foreach (var service in services)
             {
-                if (service.GetInterface(nameof(IMonoService)) is null)
+                if (service.GetInterface(nameof(IMonoService)) == null)
                 {
                     throw new NotSupportedException($"{service.Name} is not a {nameof(IMonoService)}");
                 }

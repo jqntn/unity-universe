@@ -44,7 +44,7 @@ namespace Zero.GIS
         {
             var cameraController = CAMERA_SERVICE.Value.CurrentCameraController;
 
-            if (cameraController is not null)
+            if (cameraController != null)
             {
                 if (math.distancesq(transform.position, cameraController.Camera.transform.position) < MaxRadius * MaxRadius * 2.0)
                 {
