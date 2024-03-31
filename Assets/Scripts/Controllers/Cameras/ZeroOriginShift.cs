@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -25,9 +27,7 @@ namespace CesiumForUnity
     /// </remarks>
     [RequireComponent(typeof(CesiumGlobeAnchor))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("Cesium/Zero Cesium Origin Shift")]
-    [Icon("Packages/com.cesium.unity/Editor/Resources/Cesium-24x24.png")]
-    internal sealed class ZeroCesiumOriginShift : MonoBehaviour
+    internal sealed class ZeroOriginShift : MonoBehaviour
     {
         /// <summary>
         /// The maximum distance between the origin of the Unity coordinate system and
@@ -49,8 +49,8 @@ namespace CesiumForUnity
                  "When the value of this property is 0.0, the origin is shifted continuously.")]
         private double _distance = 0.0;
 
-        private CesiumGeoreference _georeference;
-        private CesiumGlobeAnchor _anchor;
+        private CesiumGeoreference _georeference = null!;
+        private CesiumGlobeAnchor _anchor = null!;
 
         private readonly List<CesiumSubScene> _sublevelsScratch = new();
 
@@ -62,32 +62,25 @@ namespace CesiumForUnity
 
         private void LateUpdate()
         {
-            // The RequireComponent attribute should ensure the globe anchor exists, but it may not be active.
-            if (_anchor == null || !_anchor.isActiveAndEnabled)
-            {
-                Debug.LogWarning("CesiumOriginShift is doing nothing because its CesiumGlobeAnchor component is missing or disabled.");
-                return;
-            }
-
             UpdateFromEcef(_georeference, _anchor.positionGlobeFixed);
         }
 
         private void UpdateFromEcef(CesiumGeoreference georeference, double3 ecef)
         {
-            CesiumSubScene closestLevel = null;
+            CesiumSubScene? closestLevel = null;
             double distanceSquaredToClosest = double.MaxValue;
 
             // Are we inside a sub-level?
             georeference.GetComponentsInChildren(true, _sublevelsScratch);
             foreach (CesiumSubScene level in _sublevelsScratch)
             {
-                // TODO: Make sure ECEF position is actually up-to-date
+                // TODO: Make sure ECEF position is actually up-to-date.
                 double x = level.ecefX - ecef.x;
                 double y = level.ecefY - ecef.y;
                 double z = level.ecefZ - ecef.z;
                 double distanceSquared = x * x + y * y + z * z;
                 if (distanceSquared > level.activationRadius * level.activationRadius)
-                    // We're outside this level's activation radius
+                    // We're outside this level's activation radius.
                     continue;
 
                 if (closestLevel == null || distanceSquared < distanceSquaredToClosest)
@@ -112,7 +105,7 @@ namespace CesiumForUnity
             {
                 bool deactivatedAnySublevel = false;
 
-                // Deactivate all active sub-levels
+                // Deactivate all active sub-levels.
                 foreach (CesiumSubScene level in _sublevelsScratch)
                 {
                     if (level.isActiveAndEnabled)
@@ -128,7 +121,7 @@ namespace CesiumForUnity
                 {
                     // Update the origin if we've surpassed the distance threshold.
                     georeference.SetOriginEarthCenteredEarthFixed(ecef.x, ecef.y, ecef.z);
-                    // Make sure the physics system is informed that things have moved
+                    // Make sure the physics system is informed that things have moved.
                     Physics.SyncTransforms();
                 }
                 else if (deactivatedAnySublevel)

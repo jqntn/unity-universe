@@ -1,3 +1,5 @@
+#nullable enable
+
 using CesiumForUnity;
 using Unity.Mathematics;
 using UnityEngine;
@@ -12,32 +14,30 @@ namespace Zero.GIS
         private static readonly LazyService<ICameraService> CAMERA_SERVICE = new();
 
         [field: SerializeField] public double MaxRadius { get; private set; } = CesiumWgs84Ellipsoid.GetMaximumRadius();
+        [field: SerializeField] public EReferenceUnit ReferenceUnit { get; private set; } = EReferenceUnit.M;
+        [field: SerializeField] public ECelestialBodyType Type { get; private set; } = ECelestialBodyType.Planet;
+        [field: SerializeField] public Transform? Surface { get; private set; }
 
-        public CesiumGlobeAnchor GlobeAnchor { get; private set; }
-        public Cesium3DTileset WorldTerrain { get; private set; }
+        public CesiumGlobeAnchor GlobeAnchor { get; private set; } = null!;
 
+#if UNITY_EDITOR
         private void OnValidate()
         {
-            SetScale();
+            if (Surface != null)
+            {
+                Surface.transform.localScale = Vector3.one * (float)(MaxRadius / CesiumWgs84Ellipsoid.GetMaximumRadius());
+            }
         }
+#endif
 
         private void Awake()
         {
             GlobeAnchor = GetComponent<CesiumGlobeAnchor>();
-            WorldTerrain = GetComponentInChildren<Cesium3DTileset>();
         }
 
         private void Update()
         {
             CheckPlayerDistance();
-        }
-
-        private void SetScale()
-        {
-            if (WorldTerrain != null)
-            {
-                WorldTerrain.transform.localScale = Vector3.one * (float)(MaxRadius / CesiumWgs84Ellipsoid.GetMaximumRadius());
-            }
         }
 
         private void CheckPlayerDistance()

@@ -1,3 +1,5 @@
+#nullable enable
+
 using UnityEngine;
 using Unity.Mathematics;
 using System.Linq;
@@ -24,13 +26,11 @@ namespace CesiumForUnity
     /// </summary>
     [RequireComponent(typeof(Camera))]
     [DisallowMultipleComponent]
-    [AddComponentMenu("Cesium/Zero Cesium Camera Controller")]
-    [Icon("Packages/com.cesium.unity/Editor/Resources/Cesium-24x24.png")]
-    internal sealed class ZeroCesiumCameraController : MonoBehaviour, ICameraController
+    internal sealed class ZeroCameraController : MonoBehaviour, ICameraController
     {
         private static readonly LazyService<ICameraService> CAMERA_SERVICE = new();
 
-        public Camera Camera { get; private set; }
+        public Camera Camera { get; private set; } = null!;
 
         public HashSet<CelestialBody> BodiesInRange { get; } = new();
 
@@ -98,7 +98,6 @@ namespace CesiumForUnity
 
         public float DynamicClippingPlanesRadius
         { get => _dynamicClippingPlanesRadius; set => _dynamicClippingPlanesRadius = math.max(value, 0.0f); }
-
         [SerializeField][Min(0.0f)] private float _dynamicClippingPlanesRadius = (float)UnitsUtils.ONE_AU;
 
 #if ENABLE_INPUT_SYSTEM
@@ -117,13 +116,12 @@ namespace CesiumForUnity
         private const float LOOK_SPEED_MULTIPLIER = 2.0f;
         private const float MOVE_SPEED_MULTIPLIER = 8.0f;
 
-        private Camera _camera;
         private float _initialNearClipPlane;
         private float _initialFarClipPlane;
 
-        private CharacterController _controller;
-        private CesiumGeoreference _georeference;
-        private CesiumGlobeAnchor _globeAnchor;
+        private CharacterController _controller = null!;
+        private CesiumGeoreference _georeference = null!;
+        private CesiumGlobeAnchor _globeAnchor = null!;
 
         private Vector3 _velocity = Vector3.zero;
         private readonly float _lookSpeed = 10.0f * LOOK_SPEED_MULTIPLIER;
@@ -134,7 +132,7 @@ namespace CesiumForUnity
 
         private float _maxSpeed = 100.0f; // Maximum speed with the speed multiplier applied.
         private float _maxSpeedPreMultiplier = 0.0f; // Max speed without the multiplier applied.
-        private AnimationCurve _maxSpeedCurve;
+        private AnimationCurve _maxSpeedCurve = null!;
 
         private float _speedMultiplier = 1.0f;
         private readonly float _speedMultiplierIncrement = 1.5f;
@@ -240,9 +238,9 @@ namespace CesiumForUnity
 
         private void InitializeCamera()
         {
-            _camera = gameObject.GetComponent<Camera>();
-            _initialNearClipPlane = _camera.nearClipPlane;
-            _initialFarClipPlane = _camera.farClipPlane;
+            Camera = gameObject.GetComponent<Camera>();
+            _initialNearClipPlane = Camera.nearClipPlane;
+            _initialFarClipPlane = Camera.farClipPlane;
         }
 
         private void InitializeController()
@@ -303,11 +301,7 @@ namespace CesiumForUnity
 
         private async void Awake()
         {
-            Camera = GetComponent<Camera>();
-
             await ServiceUtils.WaitForDependency<ICameraService>();
-
-            CAMERA_SERVICE.Value.RegisterCameraController(this);
 
             _georeference = gameObject.GetComponentInParent<CesiumGeoreference>();
             if (_georeference == null)
@@ -323,8 +317,7 @@ namespace CesiumForUnity
                 Debug.LogError("CesiumCameraController must have a CesiumGlobeAnchor " +
                     "attached to itself or a parent");
             }
-
-            if (!_globeAnchor.TryGetComponent<ZeroCesiumOriginShift>(out _))
+            else if (!_globeAnchor.TryGetComponent<ZeroOriginShift>(out _))
             {
                 Debug.LogError("CesiumCameraController expects a CesiumOriginShift " +
                     $"on {(_globeAnchor != null ? _globeAnchor.name : null)}, none found");
@@ -337,6 +330,8 @@ namespace CesiumForUnity
 #if ENABLE_INPUT_SYSTEM
             ConfigureInputs();
 #endif
+
+            CAMERA_SERVICE.Value.RegisterCameraController(this);
         }
 
 #if UNITY_EDITOR
@@ -361,17 +356,6 @@ namespace CesiumForUnity
         #endregion Initialization
 
         #region Update
-
-        private void OnTransformParentChanged()
-        {
-            _georeference = gameObject.GetComponentInParent<CesiumGeoreference>();
-            if (_georeference == null)
-            {
-                Debug.LogError(
-                    "CesiumCameraController must be nested under a game object " +
-                    "with a CesiumGeoreference.");
-            }
-        }
 
         private void Update()
         {
@@ -398,7 +382,7 @@ namespace CesiumForUnity
 
             if (Physics.Linecast(transform.position, (float3)center, out RaycastHit hitInfo))
             {
-                hitDistance = Vector3.Distance(transform.position, hitInfo.point);
+                hitDistance = math.distance(transform.position, hitInfo.point);
                 return true;
             }
 
@@ -410,7 +394,7 @@ namespace CesiumForUnity
         {
             if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hitInfo, raycastDistance))
             {
-                hitDistance = Vector3.Distance(transform.position, hitInfo.point);
+                hitDistance = math.distance(transform.position, hitInfo.point);
                 return true;
             }
 
@@ -750,7 +734,7 @@ namespace CesiumForUnity
 
         private void UpdateClippingPlanes()
         {
-            if (_camera == null)
+            if (Camera == null)
             {
                 return;
             }
@@ -766,9 +750,17 @@ namespace CesiumForUnity
 
             if (height >= _dynamicClippingPlanesMinHeight)
             {
-                double radius = BodiesInRange.Any()
-                              ? BodiesInRange.Max(x => x.MaxRadius)
-                              : _dynamicClippingPlanesRadius;
+                double radius = _dynamicClippingPlanesRadius;
+
+                if (BodiesInRange.Any())
+                {
+                    IEnumerable<CelestialBody> surfaceBodiesInRange =
+                        BodiesInRange.Where(x => x.Surface != null && x.ReferenceUnit == EReferenceUnit.M);
+                    if (surfaceBodiesInRange.Any())
+                    {
+                        radius = surfaceBodiesInRange.Max(x => x.MaxRadius);
+                    }
+                }
 
                 farClipPlane = height + (float)(2.0 * radius);
                 farClipPlane = math.min(farClipPlane, _maximumFarClipPlane);
@@ -781,8 +773,8 @@ namespace CesiumForUnity
                 }
             }
 
-            _camera.nearClipPlane = nearClipPlane;
-            _camera.farClipPlane = farClipPlane;
+            Camera.nearClipPlane = nearClipPlane;
+            Camera.farClipPlane = farClipPlane;
         }
 
         #endregion Dynamic clipping plane adjustment

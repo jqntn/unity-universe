@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,7 +7,7 @@ namespace Zero.Services.Base
 {
     internal sealed class ServiceOrchestrator : MonoBehaviour
     {
-        [SerializeField] private List<GameObject> _services;
+        [SerializeField] private List<GameObject> _services = new();
 
         private void Awake()
         {

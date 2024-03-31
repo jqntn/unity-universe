@@ -1,3 +1,5 @@
+#nullable enable
+
 using Unity.Mathematics;
 using UnityEngine;
 

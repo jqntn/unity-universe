@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections;
 using Unity;
 using UnityEngine;
@@ -8,9 +10,9 @@ namespace Zero.Services
 {
     internal sealed class CameraService : MonoBehaviour, ICameraService
     {
-        [field: SerializeField] public ICameraController CurrentCameraController { get; private set; }
+        public ICameraController? CurrentCameraController { get; private set; }
 
-        [SerializeField] private Camera _defaultCamera;
+        [SerializeField] private Camera _defaultCamera = null!;
 
         public void Awake()
         {

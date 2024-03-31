@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections.Generic;
 using UnityEngine;
 using Zero.GIS;
@@ -12,9 +14,9 @@ namespace Zero.Controllers.Cameras
     {
         private static readonly LazyService<ICameraService> CAMERA_SERVICE = new();
 
-        public Camera Camera { get; private set; }
+        public Camera Camera { get; private set; } = null!;
 
-        public HashSet<CelestialBody> BodiesInRange { get; }
+        public HashSet<CelestialBody> BodiesInRange { get; } = new();
 
         private async void Awake()
         {
